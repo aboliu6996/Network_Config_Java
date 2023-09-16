@@ -1,0 +1,281 @@
+// example of the code that allow user to input basic information and create configuration code for Cisco router
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
+
+public class CodeGeneratorApp extends JFrame {
+    private LeftPanel leftPanel;
+    private RightPanel rightPanel;
+
+    public CodeGeneratorApp() {
+        setTitle("Code Generator");
+        setExtendedState(JFrame.MAXIMIZED_BOTH);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
+        leftPanel = new LeftPanel();
+        rightPanel = new RightPanel();
+
+        leftPanel.setRightPanel(rightPanel);
+        
+        
+        JMenuBar menuBar = new JMenuBar();
+        JMenu fileMenu = new JMenu("File");
+        JMenuItem saveMenuItem = new JMenuItem("Save to File");
+        saveMenuItem.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                saveToFile();
+            }
+        });
+        fileMenu.add(saveMenuItem);
+        
+        JMenuItem quitMenuItem = new JMenuItem("Quit");
+        quitMenuItem.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                System.exit(0);
+            }
+        });
+        fileMenu.add(quitMenuItem);
+        
+        menuBar.add(fileMenu);
+
+        setJMenuBar(menuBar);
+
+        add(leftPanel, BorderLayout.WEST);
+        add(rightPanel, BorderLayout.CENTER);
+    }
+    
+    
+    private void saveToFile() {
+        JFileChooser fileChooser = new JFileChooser();
+        int option = fileChooser.showSaveDialog(this);
+
+        if (option == JFileChooser.APPROVE_OPTION) {
+            try (BufferedWriter writer = new BufferedWriter(new FileWriter(fileChooser.getSelectedFile()))) {
+                writer.write(rightPanel.getOutputContent());
+                writer.flush();
+                JOptionPane.showMessageDialog(this, "File saved successfully!");
+            } catch (IOException ex) {
+                JOptionPane.showMessageDialog(this, "An error occurred while saving the file.", "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> {
+            new CodeGeneratorApp().setVisible(true);
+        });
+    }
+}
+
+class LeftPanel extends JPanel {
+    private JCheckBox ciscoRouterCheckBox;
+    private JCheckBox ethernetUplinkCheckBox;
+    private JCheckBox ethernetUplink2CheckBox;
+    private JCheckBox vlanInterfaceCheckBox;
+    private RightPanel rightPanel;
+    private StringBuilder outputText;
+
+    public LeftPanel() {
+        setLayout(new GridLayout(0, 1));
+
+        ciscoRouterCheckBox = new JCheckBox("Cisco Router");
+        ethernetUplinkCheckBox = new JCheckBox("Ethernet Uplink/WAN port");
+        ethernetUplink2CheckBox = new JCheckBox("Ethernet Uplink/WAN port 2");
+        vlanInterfaceCheckBox = new JCheckBox("VLAN Interface");
+        
+
+        add(ciscoRouterCheckBox);
+        add(ethernetUplinkCheckBox);
+        add(ethernetUplink2CheckBox);
+        add(vlanInterfaceCheckBox);
+
+        outputText = new StringBuilder();
+
+        ciscoRouterCheckBox.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                if (ciscoRouterCheckBox.isSelected()) {
+                    outputText.append("! Cisco Router\n!\n");
+                    showCiscoRouterDialog();
+                } else {
+                    outputText.replace(outputText.indexOf("! Cisco Router\n!\n"), outputText.length(), "");
+                }
+                updateRightPanel();
+            }
+        });
+
+        ethernetUplinkCheckBox.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                if (ethernetUplinkCheckBox.isSelected()) {
+                    outputText.append("! Ethernet Uplink/WAN port\n!\n");
+                    showEthernetUplinkDialog();
+                } else {
+                    outputText.replace(outputText.indexOf("! Ethernet Uplink/WAN port\n!\n"), outputText.length(), "");
+                }
+                updateRightPanel();
+            }
+        });
+
+        ethernetUplink2CheckBox.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                if (ethernetUplink2CheckBox.isSelected()) {
+                    outputText.append("! Ethernet Uplink/WAN port 2\n!\n");
+                    showEthernetUplink2Dialog();
+                } else {
+                    outputText.replace(outputText.indexOf("! Ethernet Uplink/WAN port 2\n!\n"), outputText.length(), "");
+                }
+                updateRightPanel();
+            }
+        });
+        
+        vlanInterfaceCheckBox.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                if (vlanInterfaceCheckBox.isSelected()) {
+                    outputText.append("! VLAN Interface\n!\n");
+                    showVlanInterfaceDialog();
+                } else {
+                    outputText.replace(outputText.indexOf("! VLAN Interface\n!\n"), outputText.length(), "");
+                }
+                updateRightPanel();
+            }
+        });
+
+        
+        
+        
+    }
+
+    public void setRightPanel(RightPanel rightPanel) {
+        this.rightPanel = rightPanel;
+    }
+
+    private void updateRightPanel() {
+        rightPanel.updateContent(outputText.toString());
+    }
+
+    private void showCiscoRouterDialog() {
+        CiscoRouterDialog dialog = new CiscoRouterDialog();
+        dialog.setLocationRelativeTo(this);
+        dialog.setVisible(true);
+
+        if (dialog.isConfirmed()) {
+            outputText.append(dialog.getOutput());
+        }
+    }
+
+    private void showEthernetUplinkDialog() {
+        EthernetUplinkDialog dialog = new EthernetUplinkDialog();
+        dialog.setLocationRelativeTo(this);
+        dialog.setVisible(true);
+
+        if (dialog.isConfirmed()) {
+            outputText.append(dialog.getOutput());
+        }
+    }
+
+    private void showEthernetUplink2Dialog() {
+        EthernetUplinkDialog dialog = new EthernetUplinkDialog();
+        dialog.setLocationRelativeTo(this);
+        dialog.setVisible(true);
+
+        if (dialog.isConfirmed()) {
+            outputText.append(dialog.getOutput());
+        }
+    }
+    
+    private void showVlanInterfaceDialog() {
+        VlanInterfaceDialog dialog = new VlanInterfaceDialog();
+        dialog.setLocationRelativeTo(this);
+        dialog.setVisible(true);
+
+        if (dialog.isConfirmed()) {
+            outputText.append(dialog.getOutput());
+        }
+    }
+
+}
+
+class RightPanel extends JPanel {
+    private JTextArea outputArea;
+
+    public RightPanel() {
+        setLayout(new BorderLayout());
+
+        outputArea = new JTextArea();
+        outputArea.setEditable(false);
+        outputArea.setPreferredSize(new Dimension(300, 100));
+
+        add(new JScrollPane(outputArea), BorderLayout.CENTER);
+    }
+
+    public void updateContent(String content) {
+        outputArea.setText(content);
+    }
+    
+    public String getOutputContent() {
+        return outputArea.getText();
+    }
+}
+
+class CiscoRouterDialog extends JDialog {
+    private JTextField enableSecretField;
+    private JTextField hostNameField;
+    private JTextField bannerField;
+    private boolean isConfirmed;
+
+    public CiscoRouterDialog() {
+        setTitle("Cisco Router Configuration");
+        setSize(400, 300);
+        setModal(true);
+
+        JPanel inputPanel = new JPanel(new GridLayout(3, 2));
+
+        enableSecretField = new JTextField();
+        hostNameField = new JTextField();
+        bannerField = new JTextField();
+        
+        inputPanel.add(new JLabel("Banner: "));
+        inputPanel.add(bannerField);
+        inputPanel.add(new JLabel("Host Name: "));
+        inputPanel.add(hostNameField);
+        inputPanel.add(new JLabel("Enable Secret: "));
+        inputPanel.add(enableSecretField);
+
+        JButton generateButton = new JButton("Generate");
+        generateButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                isConfirmed = true;
+                dispose();
+            }
+        });
+
+        JPanel buttonPanel = new JPanel();
+        buttonPanel.add(generateButton);
+
+        setLayout(new BorderLayout());
+        add(inputPanel, BorderLayout.CENTER);
+        add(buttonPanel, BorderLayout.SOUTH);
+    }
+
+    public boolean isConfirmed() {
+        return isConfirmed;
+    }
+
+    public String getOutput() {
+        String banner = bannerField.getText();
+        String hostName = hostNameField.getText();
+        String enableSecret = enableSecretField.getText();
+
+        StringBuilder output = new StringBuilder();
+        output.append("banner exec $ customer ").append(banner).append("\n!\n")
+           .append("hostname ").append(hostName).append("\n!\n")
+                .append("enable secret: ").append(enableSecret).append("\n!\n");
+
+        return output.toString();
+    }
+}
+
